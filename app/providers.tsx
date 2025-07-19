@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
+import {AppRouterCacheProvider} from "@mui/material-nextjs/v13-appRouter";
 
 type Props = {
     children: ReactNode;
@@ -10,7 +11,9 @@ type Props = {
 export function Providers({ children }: Props) {
     return (
         <SessionProvider>
-            {children}
+            <AppRouterCacheProvider>
+                {children}
+            </AppRouterCacheProvider>
         </SessionProvider>
     );
 }
