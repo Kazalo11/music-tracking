@@ -1,4 +1,3 @@
-import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 
 const scopes = [
     "user-read-email",
@@ -19,20 +18,4 @@ const scopes = [
     "user-read-currently-playing",
 ]
 
-const sdk = SpotifyApi.withClientCredentials(
-    process.env.SPOTIFY_CLIENT_ID!,
-    process.env.SPOTIFY_CLIENT_SECRET!,
-    scopes
-)
-
-const params = new URLSearchParams({
-    client_id: process.env.SPOTIFY_CLIENT_ID!,
-    response_type: "code",
-    redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
-    scope: scopes.join(","),
-
-});
-
-const LOGIN_URL = `https://accounts.spotify.com/authorize?${params.toString()}`;
-
-export { sdk, LOGIN_URL, scopes };
+export {  scopes };
