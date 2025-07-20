@@ -1,5 +1,4 @@
-
-const scopes = [
+export const scopes = [
     "user-read-email",
     "playlist-read-private",
     "playlist-read-collaborative",
@@ -17,5 +16,3 @@ const scopes = [
     "user-modify-playback-state",
     "user-read-currently-playing",
 ]
-
-export {  scopes };

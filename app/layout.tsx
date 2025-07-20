@@ -1,5 +1,6 @@
 'use client';
 import { Providers } from './providers';
+import Header from "@/app/header";
 
 export default function RootLayout({
   children,
@@ -11,6 +12,7 @@ export default function RootLayout({
       <body
       >
       <Providers>
+          <Header/>
           {children}
       </Providers>
       </body>
