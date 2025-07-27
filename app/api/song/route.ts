@@ -16,13 +16,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const {spotifyId, title, tutorialUrl, artistNames, sheetMusic} = submitSongFormDataSchema.parse(await request.formData());
 
 
-    // const formData = await request.formData();
-    // const spotifyId = formData.get("spotifyId") as string;
-    // const title = formData.get("title") as string;
-    // const tutorialUrl = formData.get("tutorialUrl") as string;
-    // const artistNames = JSON.parse(formData.get("artistNames") as string) as string[];
-    // const sheetMusic = formData.get("sheetMusic") as File | null;
-
     const body: SongWithTutorial = {
         spotifyId,
         title,
