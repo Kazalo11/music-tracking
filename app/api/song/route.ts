@@ -1,5 +1,5 @@
 import {StatusCodes} from "http-status-codes";
-import {SongWithTutorial, submitSongFormDataSchema} from "@/app/models/songs";
+import {Song, SongWithTutorial, SubmitSongFormData, submitSongFormDataSchema} from "@/app/models/songs";
 import {PutCommand} from "@aws-sdk/lib-dynamodb";
 import {isValidRequestBody} from "@/app/api/song/isValidBody";
 import {dynamoDB} from "@/app/_lib/dynamodb";
@@ -9,30 +9,16 @@ import uploadSheetMusicToS3 from "@/app/api/song/uploadSheetMusicToS3";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id;
+    if (!userId) {
         return NextResponse.json("Unauthorized", { status: StatusCodes.UNAUTHORIZED });
     }
 
-    const {spotifyId, title, tutorialUrl, artistNames, sheetMusic} = submitSongFormDataSchema.parse(await request.formData());
+    const song: SongWithTutorial = submitSongFormDataSchema.parse(await request.formData());
 
-
-    const body: SongWithTutorial = {
-        spotifyId,
-        title,
-        tutorialUrl,
-        artistNames,
-        sheetMusic,
-        sheetMusicFileName: undefined
-    };
-
-    if (!isValidRequestBody(body)) {
-        return NextResponse.json("Invalid input", { status: StatusCodes.BAD_REQUEST });
-    }
-
-    if (sheetMusic) {
-        const fileName = `${title}.pdf`
+    if (song.sheetMusic) {
         try {
-            body.sheetMusicFileName = await uploadSheetMusicToS3(session.user.id, fileName, sheetMusic);
+            song.sheetMusicFileName = await uploadSheetMusicToS3(session.user.id, `${song.title}.pdf`, song.sheetMusic);
         } catch (err) {
             if (err instanceof Error) {
                 const message = err.message;
@@ -44,13 +30,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const command = new PutCommand({
         TableName: process.env.DYNAMO_DB_TABLE_NAME!,
-        Item: {
-            spotifyId,
-            artistNames,
-            title,
-            tutorialUrl,
-            ...(body.sheetMusicFileName && { sheetMusicFileName: body.sheetMusicFileName }),
-        }
+        Item: song
     });
     try {
         await dynamoDB.send(command);
@@ -60,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             return NextResponse.json(`Failed to save song due to ${error.message}`, {status: StatusCodes.INTERNAL_SERVER_ERROR});
         }
     }
-    return NextResponse.json({id: spotifyId}, {
+    return NextResponse.json({id: song.spotifyId}, {
         status: StatusCodes.CREATED,
         headers: { "Content-Type": "application/json" },
     });

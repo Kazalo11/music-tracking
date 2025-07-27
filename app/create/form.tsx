@@ -5,6 +5,8 @@ import {Song} from "@/app/models/songs";
 import UploadFile from "@/app/create/uploadFile";
 import Dropdown, {OptionType} from "@/components/dropdown";
 import {getSongOptionByName} from "@/app/create/searchSong";
+import {useRouter} from "next/navigation";
+import {useSession} from "next-auth/react";
 
 export type SongOption = Song & OptionType;
 
@@ -13,6 +15,9 @@ export default function FormPage() {
     const [sheetMusic, setSheetMusic] = useState<File | null>(null);
     const [songOption, setSongOption] = useState<SongOption | null>(null);
     const [tutorialUrl, setTutorialUrl] = useState<string>("");
+    const {data: session} = useSession();
+    const router = useRouter();
+
 
     const handleSubmit = async () => {
         if (!songOption) {
@@ -49,7 +54,10 @@ export default function FormPage() {
             return;
         }
 
+        const {id: songId} = await res.json();
+
         alert("Song submitted successfully!");
+        router.push(`/learn/${session?.user.id}/${songId}`);
     };
 
 
