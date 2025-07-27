@@ -3,42 +3,35 @@ import {SongWithTutorial} from "@/app/models/songs";
 import {PutCommand} from "@aws-sdk/lib-dynamodb";
 import {isValidRequestBody} from "@/app/api/song/isValidBody";
 import {dynamoDB} from "@/app/_lib/dynamodb";
+import {NextRequest, NextResponse} from "next/server";
+import {auth} from "@/app/_lib/auth";
+import uploadSheetMusicToS3 from "@/app/api/song/uploadSheetMusicToS3";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return NextResponse.json("Unauthorized", { status: StatusCodes.UNAUTHORIZED });
+    }
+
+
     const body: SongWithTutorial = await request.json();
     const { spotifyId, title, artistNames, tutorialUrl, sheetMusic } = body;
 
     if (!isValidRequestBody(body)) {
-        return new Response("Invalid input", { status: StatusCodes.BAD_REQUEST });
+        return NextResponse.json("Invalid input", { status: StatusCodes.BAD_REQUEST });
     }
 
     if (sheetMusic) {
         const fileName = `${title}_${spotifyId}.pdf`
-        const res = await fetch(`${process.env.BACKEND_URL}/api/s3/upload-url`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                fileName,
-                fileType: 'application/pdf',
-            }),
-        })
-        const { url } = await res.json();
-        if (!url) {
-            return new Response("Failed to get upload URL", { status: StatusCodes.INTERNAL_SERVER_ERROR });
+        try {
+            body.sheetMusicFileName = await uploadSheetMusicToS3(session.user.id, fileName, sheetMusic);
+        } catch (err) {
+            if (err instanceof Error) {
+                const message = err.message;
+                console.error("Error uploading sheet music to S3:", message);
+                return NextResponse.json(`Failed to upload sheet music due to ${message}`, { status: StatusCodes.INTERNAL_SERVER_ERROR });
+            }
         }
-        const uploadRes = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/pdf',
-            },
-            body: sheetMusic,
-        });
-        if (!uploadRes.ok) {
-            return new Response("Failed to upload sheet music", { status: StatusCodes.INTERNAL_SERVER_ERROR });
-        }
-        body.sheetMusicFileName = fileName;
     }
 
     const command = new PutCommand({
@@ -54,12 +47,12 @@ export async function POST(request: Request) {
     try {
         await dynamoDB.send(command);
     } catch (error) {
-        console.error("Error saving song to DynamoDB:", error);
-        return new Response("Failed to save song", { status: StatusCodes.INTERNAL_SERVER_ERROR });
+        if (error instanceof Error) {
+            console.error("Error saving song to DynamoDB:", error);
+            return NextResponse.json(`Failed to save song due to ${error.message}`, {status: StatusCodes.INTERNAL_SERVER_ERROR});
+        }
     }
-
-
-    return new Response(JSON.stringify({id: spotifyId}), {
+    return NextResponse.json({id: spotifyId}, {
         status: StatusCodes.CREATED,
         headers: { "Content-Type": "application/json" },
     });

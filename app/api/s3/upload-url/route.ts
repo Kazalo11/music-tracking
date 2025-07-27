@@ -1,16 +1,16 @@
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import {s3, S3UrlResponse} from "@/app/_lib/s3";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import {NextResponse} from "next/server";
-import {getServerSession} from "next-auth/next";
+import {NextRequest, NextResponse} from "next/server";
 import {StatusCodes} from "http-status-codes";
+import {auth} from "@/app/_lib/auth";
 
 
 
-export async function POST(request: Request): Promise<NextResponse<S3UrlResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<S3UrlResponse>> {
 const {fileName, fileType} = await request.json();
-    const session = await getServerSession();
-    console.log(session);
+    const session = await auth();
+    console.info(session);
     if (!session || !session.user) {
         return NextResponse.json({ url: "", error: 'Unauthorized' }, { status: StatusCodes.UNAUTHORIZED });
     }
