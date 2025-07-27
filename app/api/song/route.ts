@@ -1,5 +1,5 @@
 import {StatusCodes} from "http-status-codes";
-import {SongWithTutorial} from "@/app/models/songs";
+import {SongWithTutorial, submitSongFormDataSchema} from "@/app/models/songs";
 import {PutCommand} from "@aws-sdk/lib-dynamodb";
 import {isValidRequestBody} from "@/app/api/song/isValidBody";
 import {dynamoDB} from "@/app/_lib/dynamodb";
@@ -13,13 +13,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json("Unauthorized", { status: StatusCodes.UNAUTHORIZED });
     }
 
+    const {spotifyId, title, tutorialUrl, artistNames, sheetMusic} = submitSongFormDataSchema.parse(await request.formData());
 
-    const formData = await request.formData();
-    const spotifyId = formData.get("spotifyId") as string;
-    const title = formData.get("title") as string;
-    const tutorialUrl = formData.get("tutorialUrl") as string;
-    const artistNames = JSON.parse(formData.get("artistNames") as string) as string[];
-    const sheetMusic = formData.get("sheetMusic") as File | null;
+
+    // const formData = await request.formData();
+    // const spotifyId = formData.get("spotifyId") as string;
+    // const title = formData.get("title") as string;
+    // const tutorialUrl = formData.get("tutorialUrl") as string;
+    // const artistNames = JSON.parse(formData.get("artistNames") as string) as string[];
+    // const sheetMusic = formData.get("sheetMusic") as File | null;
 
     const body: SongWithTutorial = {
         spotifyId,
