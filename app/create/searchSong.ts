@@ -1,9 +1,11 @@
 import {SongOption} from "@/app/create/form";
 import {Song} from "@/app/models/songs";
+import debounce from 'debounce-promise';
 
-export async function getSongOptionByName(name: string): Promise<SongOption[]> {
+async function fetchSongOptionByName(name: string): Promise<SongOption[]> {
+    if (!name) return [];
     const res = await fetch('/api/search/song?name=' + encodeURIComponent(name));
-    const songs: Song[] = await res.json();
+    const { songs }: { songs: Song[] } = await res.json();
     return songs.map((song) => {
         return {
             ...song,
@@ -12,3 +14,5 @@ export async function getSongOptionByName(name: string): Promise<SongOption[]> {
         }
     })
 }
+
+export const getSongOptionByName = debounce(fetchSongOptionByName, 300)
