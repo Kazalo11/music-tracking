@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     if (sheetMusic) {
         const fileName = `${title}_${spotifyId}.pdf`
-        const res = await fetch('/api/s3/upload-url', {
+        const res = await fetch(`${process.env.BACKEND_URL}/api/s3/upload-url`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import {StatusCodes} from "http-status-codes";
 export async function POST(request: Request): Promise<NextResponse<S3UrlResponse>> {
 const {fileName, fileType} = await request.json();
     const session = await getServerSession();
+    console.log(session);
     if (!session || !session.user) {
         return NextResponse.json({ url: "", error: 'Unauthorized' }, { status: StatusCodes.UNAUTHORIZED });
     }

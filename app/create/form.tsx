@@ -19,6 +19,11 @@ export default function FormPage() {
             alert("Please select a song first");
             return;
         }
+
+        if (!tutorialUrl) {
+            alert("Please enter a YouTube tutorial link");
+            return;
+        }
         if (!sheetMusic && !confirm("Are you sure you want to submit without a sheet music file?")) return;
 
         const {value, label, ...song} = songOption;
