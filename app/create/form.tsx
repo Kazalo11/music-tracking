@@ -1,7 +1,7 @@
 "use client"
 import {Button, Card, Field, Input, Stack} from "@chakra-ui/react"
 import {useState} from "react";
-import {Song, SongWithTutorial} from "@/app/models/songs";
+import {Song} from "@/app/models/songs";
 import UploadFile from "@/app/create/uploadFile";
 import Dropdown, {OptionType} from "@/components/dropdown";
 import {getSongOptionByName} from "@/app/create/searchSong";
@@ -24,25 +24,33 @@ export default function FormPage() {
             alert("Please enter a YouTube tutorial link");
             return;
         }
+
         if (!sheetMusic && !confirm("Are you sure you want to submit without a sheet music file?")) return;
 
         const {value, label, ...song} = songOption;
-        const songWithSheetMusic: SongWithTutorial = {
-            ...song,
-            sheetMusic: sheetMusic || null,
-            tutorialUrl,
+
+        const formData = new FormData();
+        formData.append("spotifyId", song.spotifyId);
+        formData.append("title", song.title);
+        formData.append("artistNames", JSON.stringify(song.artistNames));
+        formData.append("tutorialUrl", tutorialUrl);
+        if (sheetMusic) {
+            formData.append("sheetMusic", sheetMusic);
         }
-        console.log("Submitting song:", songWithSheetMusic);
-        const res = await fetch('/api/song', {
-            method: 'POST',
-            body: JSON.stringify(songWithSheetMusic),
-        })
+
+        const res = await fetch("/api/song", {
+            method: "POST",
+            body: formData
+        });
+
         if (!res.ok) {
-            alert("Failed to submit song");
+            const error = await res.text();
+            alert(`Failed to submit song: ${error}`);
             return;
         }
 
-    }
+        alert("Song submitted successfully!");
+    };
 
 
     return (

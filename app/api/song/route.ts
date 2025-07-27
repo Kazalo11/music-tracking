@@ -14,15 +14,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
 
-    const body: SongWithTutorial = await request.json();
-    const { spotifyId, title, artistNames, tutorialUrl, sheetMusic } = body;
+    const formData = await request.formData();
+    const spotifyId = formData.get("spotifyId") as string;
+    const title = formData.get("title") as string;
+    const tutorialUrl = formData.get("tutorialUrl") as string;
+    const artistNames = JSON.parse(formData.get("artistNames") as string) as string[];
+    const sheetMusic = formData.get("sheetMusic") as File | null;
+
+    const body: SongWithTutorial = {
+        spotifyId,
+        title,
+        tutorialUrl,
+        artistNames,
+        sheetMusic,
+        sheetMusicFileName: undefined
+    };
 
     if (!isValidRequestBody(body)) {
         return NextResponse.json("Invalid input", { status: StatusCodes.BAD_REQUEST });
     }
 
     if (sheetMusic) {
-        const fileName = `${title}_${spotifyId}.pdf`
+        const fileName = `${title}.pdf`
         try {
             body.sheetMusicFileName = await uploadSheetMusicToS3(session.user.id, fileName, sheetMusic);
         } catch (err) {
